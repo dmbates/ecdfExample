@@ -15,53 +15,31 @@ The samples were large: about 6,000,000 numeric values in the
 reference distribution sample and about 2,000,000 in the observed
 sample.  The reference distribution was not a Gaussian but we will
 generate samples from this distribution for illustration.
-
-```r
-set.seed(1234321)  # for reproducibility of results
+```{r samplegen,cache=TRUE}
+set.seed(1234321)           # for reproducibility of results
 ref <- rnorm(6000000L)
 samp <- rnorm(2000000L)
 ```
 
-
 The important step is determining what portion of the reference sample
 is less than each element of the observed sample.  For a single
 element in the observed sample a vectorized comparison would be
-
-```r
+```{r onecmp,cache=TRUE}
 (numlt1 <- sum(ref < samp[1]))
-```
-
-```
-## [1] 4174960
-```
-
-```r
-(prop1 <- numlt1/length(ref))
-```
-
-```
-## [1] 0.6958
-```
-
+(prop1 <- numlt1 / length(ref))
+ ```
  
 An individual evaluation like this is fast but 2,000,000 such evaluations took a long time.
 For illustration we consider a subsample of size 100.
-
-```r
+```{r oneccmp,cache=TRUE}
 numltr <- function(obs, ref) {
-    nobs <- length(obs)
-    ans <- integer(nobs)
-    for (i in seq_len(nobs)) ans[i] <- sum(ref < obs[i])
-    ans
-}
+  nobs <- length(obs)
+  ans <- integer(nobs)
+  for (i in seq_len(nobs)) ans[i] <- sum(ref < obs[i])
+  ans                 
+}               
 system.time(numlt1 <- numltr(samp[1:100], ref))
 ```
-
-```
-##    user  system elapsed 
-##   7.892   0.844   8.828
-```
-
 
 On this computer a single evaluation takes about 0.1 seconds.  Obviously 2,000,000 evaluations will be slow.
 
@@ -84,63 +62,20 @@ IntegerVector cpplb(NumericVector samp, NumericVector sref) {
 ```
 
 The `sourceCpp` function in the `Rcpp` package is used compile this C++ function and make it visible as an `R` function.   In [Rstudio](http://www.rstudio.com) this operation is even easier because the user can open the `.cpp` file and click the "source on save" button so that every time the file is saved it is loaded with `sourceCpp` into the current `R` sesssion.
-
-```r
+```{r cpr,cache=TRUE}
 library(Rcpp)
 sourceCpp("ecdf.cpp")
 system.time(sref <- sort(ref))
-```
-
-```
-##    user  system elapsed 
-##   1.444   0.008   1.456
-```
-
-```r
 system.time(numlb <- cpplb(samp[1:100], sref))
-```
-
-```
-##    user  system elapsed 
-##       0       0       0
-```
-
-```r
 str(numlt1)
-```
-
-```
-##  int [1:100] 4174960 3589165 560670 86823 640624 4314046 5096987 2202714 5477351 3914446 ...
-```
-
-```r
 str(numlb)
-```
-
-```
-##  int [1:100] 4174960 3589165 560670 86823 640624 4314046 5096987 2202714 5477351 3914446 ...
-```
-
-```r
 all.equal(numlt1, numlb)
 ```
-
-```
-## [1] TRUE
-```
-
 The `cpplb` function is too fast to time on only 100 evaluations.  We can actually run the entire 
 sample in a few seconds with this function.
-
-```r
+```{r samptime,cache=TRUE}
 system.time(numlt2 <- cpplb(samp, sref))
 ```
-
-```
-##    user  system elapsed 
-##   1.452   0.000   1.514
-```
-
 ## Using a sorted sample in `C++`
 
 Even with a binary search we are still performing over 20 comparisons for each element of `samp`.
@@ -162,33 +97,11 @@ IntegerVector cppcp(NumericVector samp, NumericVector ref, IntegerVector ord) {
 }
 ```
 but it executes very quickly
-
-```r
-system.time(ord <- order(samp))
-```
-
-```
-##    user  system elapsed 
-##   2.400   0.012   2.475
-```
-
-```r
+```{r cppcp,cache=TRUE}
+system.time(ord <- order(samp)) 
 system.time(numlt3 <- cppcp(samp, sref, ord))
-```
-
-```
-##    user  system elapsed 
-##   0.244   0.000   0.244
-```
-
-```r
 all.equal(numlt3, numlt2)
 ```
-
-```
-## [1] TRUE
-```
-
 
 This process is reasonably convenient, especially with the support available in [Rstudio](http://rstudio.org) but it does involve two languages and interface code.
 
@@ -295,52 +208,15 @@ julia> @assert all(numlt5 .== numlt2)
 # Summary
 
 When I first was asked speeding up this calculation, I didn't think of it as evaluating an "ecdf".  Had I done so, I would have realized that there is an `ecdf` function in the `stats` package and I could have saved myself some trouble.  It takes a bit of reading to decide that the `ecdf` function applied to the reference sample returns a function that is applied to the observed sample to get the quantiles.
-
-```r
+```{r ecdfgen,cache=TRUE}
 system.time(ed <- ecdf(ref))
-```
-
-```
-##    user  system elapsed 
-##   6.256   0.368   6.653
-```
-
-```r
 system.time(quant <- ed(samp))
 ```
-
-```
-##    user  system elapsed 
-##   1.964   0.068   2.042
-```
-
 The function itself is hidden by a class
-
-```r
+```{r ecdffun,cache=TRUE}
 ed
-```
-
-```
-## Empirical CDF 
-## Call: ecdf(ref)
-##  x[1:6000000] = -4.9, -4.9, -4.9,  ...,   5,   5
-```
-
-```r
 unclass(ed)
 ```
-
-```
-## function (v) 
-## .C(C_R_approxfun, as.double(x), as.double(y), n, xout = as.double(v), 
-##     as.integer(length(v)), as.integer(method), as.double(yleft), 
-##     as.double(yright), as.double(f), NAOK = TRUE)$xout
-## <bytecode: 0x39c37c0>
-## <environment: 0x39c2418>
-## attr(,"call")
-## ecdf(ref)
-```
-
 This performance would undoubtably been acceptable but I didn't think to look for the function.  Also, if you want to understand how it is evaluating the quantiles you need to wade your way through the `C` functions in the file `./src/src/library/stats/src/approx.c` in the `R` source tree.  This is not impossibly difficult but neither is it easy.
 
 A comparison of the Rcpp and Julia execution times on each stage is:
