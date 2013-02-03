@@ -4,3 +4,4 @@
 cache/
 *.rda
 *.html
+.juliahistory
