@@ -67,7 +67,7 @@ On this computer a single evaluation takes about 0.1 seconds.  Obviously 2,000,0
 
 ## Using `std::lower_bound` in `C++`
 
-Those familiar with algorithms like binary search will realize that by sorting the reference sample and using a binary search the number of evaluations can be reduced enormously.  In C++ the `std::lower_bound` algorithm from the STL (Standard Template Library) returns the index of the last element in the sorted reference sample that is less than a given value.
+Those familiar with algorithms like binary search will realize that by sorting the reference sample and using a binary search the number of comparisons can be reduced enormously.  In C++ the `std::lower_bound` algorithm from the STL (Standard Template Library) returns the index of the last element in the sorted reference sample that is less than a given value.
 
 The file `ecdf.cpp` is a C++ source file containing
 ```c++
@@ -231,7 +231,7 @@ The speed is comparable to the speed of the method using `Rcpp` and `std::lower_
 
 As is common in `Julia` the `searchsortedlast` function is written in `Julia`.
 ```julia
-# index of the last value of vector a that is less than or equal to x;
+# index of the last value of vector v that is less than or equal to x;
 # returns 0 if x is less than all values of v.
 function searchsortedlast(o::Ordering, v::AbstractVector, x, lo::Int, hi::Int)
     lo = lo-1
@@ -270,8 +270,6 @@ julia> @elapsed sortperm(samp)
 julia> dump(ord)
 Array(Int64,(2000000,)) [31333, 440792, 788079, 1496204, 449572, 297156  …  11333, 963459, 1204917, 883672, 1331988]
 
-julia> 
-
 julia> function julcp(samp::Vector{Float64}, sref::Vector{Float64}, ord::Vector{Int})
            j = 1
            ans = similar(ord)
@@ -281,8 +279,6 @@ julia> function julcp(samp::Vector{Float64}, sref::Vector{Float64}, ord::Vector{
            end
            ans
        end
-
-julia> 
 
 julia> numlt5 = julcp(samp, sref, ord);
 
