@@ -21,3 +21,10 @@ IntegerVector cppcp(NumericVector samp, NumericVector ref, IntegerVector ord) {
   }
   return ans;
 }
+
+//[[Rcpp::export]]
+NumericVector cppsort(NumericVector v) {
+    NumericVector sv(clone(v));
+    std::sort(sv.begin(), sv.end());
+    return sv;
+}

@@ -223,3 +223,20 @@ sort reference sample|1.456|0.340
 quantiles by binary search|1.452|2.552
 permutation to order the observed sample|2.475|0.914
 sequential search on ordered sample|0.244|0.249
+
+I should note that there is a `sort` templated function in Standard Template Library (STL) for `C++` which makes it easy to write a function `cppsort` for `R`
+```c++
+//[[Rcpp::export]]
+NumericVector cppsort(NumericVector v) {
+    NumericVector sv(clone(v));
+    std::sort(sv.begin(), sv.end());
+    return sv;
+}
+```
+I wasn't able to find a native `sort` function in `Rcpp` so this function is specific to numeric vectors.  It should be possible to write a generic sort for vector objects in `R` (numeric, integer and perhaps character vectors) but that is beyond my skill in C++ template metaprogramming.
+
+This function is faster than the `sort` function in `R` but still not as fast as the Julia `sort` function.
+```{r sortR,cache=TRUE}
+all.equal(sref, cppsort(ref))
+system.time(cppsort(ref))
+```

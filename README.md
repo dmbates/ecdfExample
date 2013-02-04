@@ -59,7 +59,7 @@ system.time(numlt1 <- numltr(samp[1:100], ref))
 
 ```
 ##    user  system elapsed 
-##   7.892   0.844   8.828
+##   7.988   0.732   8.778
 ```
 
 
@@ -93,7 +93,7 @@ system.time(sref <- sort(ref))
 
 ```
 ##    user  system elapsed 
-##   1.444   0.008   1.456
+##   1.448   0.008   1.458
 ```
 
 ```r
@@ -138,7 +138,7 @@ system.time(numlt2 <- cpplb(samp, sref))
 
 ```
 ##    user  system elapsed 
-##   1.452   0.000   1.514
+##   1.472   0.000   1.497
 ```
 
 ## Using a sorted sample in `C++`
@@ -169,7 +169,7 @@ system.time(ord <- order(samp))
 
 ```
 ##    user  system elapsed 
-##   2.400   0.012   2.475
+##   2.416   0.004   2.453
 ```
 
 ```r
@@ -178,7 +178,7 @@ system.time(numlt3 <- cppcp(samp, sref, ord))
 
 ```
 ##    user  system elapsed 
-##   0.244   0.000   0.244
+##   0.240   0.000   0.239
 ```
 
 ```r
@@ -298,7 +298,7 @@ system.time(ed <- ecdf(ref))
 
 ```
 ##    user  system elapsed 
-##   6.256   0.368   6.653
+##   5.513   0.284   5.818
 ```
 
 ```r
@@ -307,7 +307,7 @@ system.time(quant <- ed(samp))
 
 ```
 ##    user  system elapsed 
-##   1.964   0.068   2.042
+##   1.856   0.032   1.895
 ```
 
 The function itself is hidden by a class
@@ -331,8 +331,8 @@ unclass(ed)
 ## .C(C_R_approxfun, as.double(x), as.double(y), n, xout = as.double(v), 
 ##     as.integer(length(v)), as.integer(method), as.double(yleft), 
 ##     as.double(yright), as.double(f), NAOK = TRUE)$xout
-## <bytecode: 0x39c37c0>
-## <environment: 0x39c2418>
+## <bytecode: 0x9bd4ff0>
+## <environment: 0x9bd3d10>
 ## attr(,"call")
 ## ecdf(ref)
 ```
@@ -347,3 +347,34 @@ sort reference sample|1.456|0.340
 quantiles by binary search|1.452|2.552
 permutation to order the observed sample|2.475|0.914
 sequential search on ordered sample|0.244|0.249
+
+I should note that there is a `sort` templated function in Standard Template Library (STL) for `C++` which makes it easy to write a function `cppsort` for `R`
+```c++
+//[[Rcpp::export]]
+NumericVector cppsort(NumericVector v) {
+    NumericVector sv(clone(v));
+    std::sort(sv.begin(), sv.end());
+    return sv;
+}
+```
+I wasn't able to find a native `sort` function in `Rcpp` so this function is specific to numeric vectors.  It should be possible to write a generic sort for vector objects in `R` (numeric, integer and perhaps character vectors) but that is beyond my skill in C++ template metaprogramming.
+
+This function is faster than the `sort` function in `R` but still not as fast as the Julia `sort` function.
+
+```r
+all.equal(sref, cppsort(ref))
+```
+
+```
+## [1] TRUE
+```
+
+```r
+system.time(cppsort(ref))
+```
+
+```
+##    user  system elapsed 
+##   0.652   0.012   0.667
+```
+
