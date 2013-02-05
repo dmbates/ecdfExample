@@ -215,6 +215,19 @@ unclass(ed)
 ```
 This performance would undoubtably been acceptable but I didn't think to look for the function.  Also, if you want to understand how it is evaluating the quantiles you need to wade your way through the `C` functions in the file `./src/src/library/stats/src/approx.c` in the `R` source tree.  This is not impossibly difficult but neither is it easy.
 
+Later ChenLiang Xu reminded me of the `findInterval` function in `R` which, as the name implies, finds the index of the interval in a sorted reference sample for each element of an observed sample.  It looks like
+```{r findinterval,cache=TRUE}
+system.time(numlt4 <- findInterval(samp, sref))
+str(numlt4)
+all.equal(numlt4,numlt3)
+```
+
+As with the `ecdf` function, it is not obvious what the algorithm being used is as the body of the function is
+```{r findInterval}
+findInterval
+```
+and it is necessary to look through the C sources for the `FindIntervVec` function.
+
 A comparison of the Rcpp and Julia execution times on each stage is:
 
 operation|R/Rcpp | Julia

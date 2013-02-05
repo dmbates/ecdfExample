@@ -339,6 +339,33 @@ unclass(ed)
 
 This performance would undoubtably been acceptable but I didn't think to look for the function.  Also, if you want to understand how it is evaluating the quantiles you need to wade your way through the `C` functions in the file `./src/src/library/stats/src/approx.c` in the `R` source tree.  This is not impossibly difficult but neither is it easy.
 
+Later ChenLiang Xu reminded me of the `findInterval` function in `R` which, as the name implies, finds the index of the interval in a sorted reference sample for each element of an observed sample.  It looks like
+
+```r
+system.time(numlt4 <- findInterval(samp, sref))
+```
+
+```
+##    user  system elapsed 
+##   5.148   0.156   5.324
+```
+
+```r
+str(numlt4)
+```
+
+```
+##  int [1:2000000] 4174960 3589165 560670 86823 640624 4314046 5096987 2202714 5477351 3914446 ...
+```
+
+```r
+all.equal(numlt4, numlt3)
+```
+
+```
+## [1] TRUE
+```
+
 A comparison of the Rcpp and Julia execution times on each stage is:
 
 operation|R/Rcpp | Julia
